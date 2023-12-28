@@ -116,6 +116,7 @@
             var sliceCursor = 0
             var timeLeft = 0
             var timerInterval = null
+            var timerStart = Date.now()
 
             var btnPlay = document.getElementById("play");
             var btnPause = document.getElementById("pause");
@@ -154,11 +155,11 @@
 
             function setTimer() {
                 timeLeft = config.seconds[sliceCursor]
-                updateTimer()
+                updateTimer(timeLeft)
             }
 
-            function updateTimer() {
-                let secs = Math.ceil(timeLeft)
+            function updateTimer(left) {
+                let secs = Math.ceil(left)
                 let mins = Math.min(99, Math.floor(secs / 60)).toString()
                 secs = (secs % 60).toString()
                 while (mins.length < 2) {
@@ -199,16 +200,19 @@
                     })
                 }
 
+                timerStart = Date.now()
+
                 if (timerInterval === null) {
                     timerInterval = setInterval(() => {
-                        timeLeft -= 0.05
-                        if (timeLeft < 0) {
-                            timeLeft = 0
+                        let left = leftOnTimer()
+                        if (left < 0) {
+                            left = 0
                             stopTheTimer()
                             timerExpired()
+                            return
                         }
-                        updateTimer()
-                    }, 50)
+                        updateTimer(left)
+                    }, 500)
                     btnPlay.classList.add("disabled")
                     btnPause.classList.remove("disabled")
                 }
@@ -225,11 +229,16 @@
 
             function stopTheTimer() {
                 if (timerInterval !== null) {
+                    timeLeft = leftOnTimer()
                     clearInterval(timerInterval)
                     timerInterval = null
                     btnPlay.classList.remove("disabled")
                     btnPause.classList.add("disabled")
                 }
+            }
+
+            function leftOnTimer() {
+                return timeLeft - (Date.now() - timerStart) / 1000
             }
         </script>
     </body>
