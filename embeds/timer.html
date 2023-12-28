@@ -142,14 +142,6 @@
 
                 setTimer()
 
-                if (config.notify) {
-                    Notification.requestPermission().then((result) => {
-                        if (result === "granted") {
-                            shallNotify = true
-                        }
-                    })
-                }
-
                 if (config.autostart) {
                     play()
                 }
@@ -198,6 +190,14 @@
             }
 
             function play() {
+                if (config.notify && Notification.permission !== "granted") {
+                    Notification.requestPermission().then((result) => {
+                        if (result === "granted") {
+                            shallNotify = true
+                        }
+                    })
+                }
+
                 if (timerInterval === null) {
                     timerInterval = setInterval(() => {
                         timeLeft -= 0.05
