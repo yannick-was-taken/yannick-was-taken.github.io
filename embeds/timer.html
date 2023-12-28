@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="embeddable countdown timer">
+        <title>countdown timer</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+        <style type="text/css">
+            * {
+                box-sizing: border-box;
+            }
+            html, body {
+                margin: 0;
+                padding: 0;
+                height: 100%;
+            }
+            body {
+                background-color: #222222;
+            }
+            #root {
+                height: 100%;
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
+            }
+            #timer {
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                align-items: center;
+                position: relative;
+                width: 100%;
+            }
+            #time {
+                color: #33bb33;
+                position: relative;
+                font-family: "segment7";
+                font-size: calc(min(60vh, 32vw));
+                transform: translate(0, min(5.038vh, 2.687vw));
+            }
+            .background-time {
+                filter: brightness(50%);
+                opacity: 0.1;
+            }
+            .foreground-time {
+                position: absolute;
+                top: 0px;
+                left: 0px;
+            }
+            .controls {
+                position: relative;
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
+                font-size: calc(min(36vh, 12vw));
+                user-select: none;
+            }
+            .controls > * {
+                margin: 0 calc(max(5px, 7%)) 0 calc(max(5px, 7%));
+                cursor: pointer;
+                user-select: none;
+            }
+            #play {
+                color: #33bb33;
+            }
+            #pause {
+                color: #ffbb33;
+            }
+            #stop {
+                color: #bb3333;
+            }
+            .disabled {
+                color: #777777 !important;
+                cursor: not-allowed;
+            }
+            @font-face {
+                font-family: Segment7;
+                src: url("../assets/fonts/segment7/segment7.otf");
+            }
+        </style>
+    </head>
+    <body onload="setupTimer()">
+        <div id="root">
+            <div id="timer">
+                <div id="time">
+                    <div class="background-time">88:88</div>
+                    <div id="fgtime" class="foreground-time">00:00</div>
+                </div>
+                <div class="controls">
+                    <div id="play">
+                        <i class="fa-solid fa-circle-play"></i>
+                    </div>
+                    <div id="pause" class="disabled">
+                        <i class="fa-solid fa-circle-pause"></i>
+                    </div>
+                    <div id="stop">
+                        <i class="fa-solid fa-circle-stop"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript">
+            var config = {
+                "seconds": [60],
+                "autostart": 0,
+                "beep": 1,
+                "notify": 1,
+                "color": "33bb33",
+            }
+
+            var shallNotify = false
+            var sliceCursor = 0
+            var timeLeft = 0
+            var timerInterval = null
+
+            var btnPlay = document.getElementById("play");
+            var btnPause = document.getElementById("pause");
+            var btnStop = document.getElementById("stop");
+
+            function setupTimer() {
+                let queryString = window.location.search.slice(1);
+                config = queryString.split("&").reduce((obj, pair) => {
+                    let parts = pair.split("=")
+                    if (parts.length === 2) {
+                        let k = decodeURIComponent(parts[0])
+                        let v = decodeURIComponent(parts[1].replace(/\+/g, " "))
+                        if (k == "seconds") {
+                            v = v.split(",").map(x => parseInt(x))
+                        } else if (/^[0-9]+$/.test(v) && k != "color") {
+                            v = parseInt(v)
+                        }
+                        obj[k] = v
+                    }
+                    return obj
+                }, config);
+                console.log("Timer Config: ", config)
+
+                document.getElementById("time").style.color = "#" + config.color
+
+                setTimer()
+
+                if (config.notify) {
+                    Notification.requestPermission().then((result) => {
+                        if (result === "granted") {
+                            shallNotify = true
+                        }
+                    })
+                }
+
+                if (config.autostart) {
+                    play()
+                }
+
+                btnPlay.onclick = play
+                btnPause.onclick = pause
+                btnStop.onclick = stop
+            }
+
+            function setTimer() {
+                timeLeft = config.seconds[sliceCursor]
+                updateTimer()
+            }
+
+            function updateTimer() {
+                let secs = Math.ceil(timeLeft)
+                let mins = Math.min(99, Math.floor(secs / 60)).toString()
+                secs = (secs % 60).toString()
+                while (mins.length < 2) {
+                    mins = "0" + mins
+                }
+                while (secs.length < 2) {
+                    secs = "0" + secs
+                }
+                document.getElementById("fgtime").innerText = `${mins}:${secs}`
+            }
+
+            function timerExpired() {
+                sliceCursor += 1
+                sliceCursor %= config.seconds.length
+                setTimer()
+
+                if (shallNotify) {
+                    new Notification("Timer Expired", {
+                        body: "Your timer has expired!",
+                    })
+                }
+
+                if (config.beep) {
+                    new Audio("../assets/sounds/pianonotification4/PianoNotification4.mp3").play()
+                }
+
+                if(config.autostart) {
+                    play()
+                }
+            }
+
+            function play() {
+                if (timerInterval === null) {
+                    timerInterval = setInterval(() => {
+                        timeLeft -= 0.05
+                        if (timeLeft < 0) {
+                            timeLeft = 0
+                            stopTheTimer()
+                            timerExpired()
+                        }
+                        updateTimer()
+                    }, 50)
+                    btnPlay.classList.add("disabled")
+                    btnPause.classList.remove("disabled")
+                }
+            }
+
+            function pause() {
+                stopTheTimer()
+            }
+
+            function stop() {
+                stopTheTimer()
+                setTimer()
+            }
+
+            function stopTheTimer() {
+                if (timerInterval !== null) {
+                    clearInterval(timerInterval)
+                    timerInterval = null
+                    btnPlay.classList.remove("disabled")
+                    btnPause.classList.add("disabled")
+                }
+            }
+        </script>
+    </body>
+</html>

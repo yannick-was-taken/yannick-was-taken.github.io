@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="more than schrott.software">
+        <meta name="author" content="schrott.software">
+        <style type="text/css">
+            * {
+                box-sizing: border-box;
+            }
+            html, body {
+                margin: 0;
+                padding: 0;
+                height: 100%;
+            }
+            body {
+                color: #bbbbbb;
+                background-color: #222222;
+                font-size: large;
+            }
+            ul {
+                list-style: none;
+            }
+            ul > ul {
+                border-left: 1px solid #222222;
+                padding: 10px 0 10px 15px;
+            }
+            div > ul {
+                border-left: none;
+                padding: 0;
+            }
+            a, a:visited, a:hover, a:active {
+                color: #55cccc;
+                text-decoration: underline;
+            }
+            #root {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                height: 100%;
+            }
+            #content {
+                max-width: 850px;
+                background-color: #333333;
+                height: calc(100% - 20px);
+                display: flex;
+                flex-direction: column;
+                margin: 10px 10px 30px 10px;
+                padding: 10px;
+                border-radius: 5px;
+            }
+            #main {
+                height: 100%;
+            }
+            #footer {
+                font-size: xx-small;
+                width: calc(100% - 40px);
+                margin: 0 20px 0 20px;
+                text-align: justify;
+            }
+            #footer::before {
+                content: '';
+                height: 1px;
+                background-image: linear-gradient(to right, #333333, #000000, #333333);
+                width: 90%;
+                display: block;
+                margin: 0 auto;
+            }
+            .project-li {
+                display: flex;
+                flex-direction: row;
+                justify-content: left;
+                align-items: center;
+            }
+            .project {
+                font-weight: bold;
+            }
+            .license {
+                font-size: x-small;
+            }
+            .made {
+                text-align: center;
+            }
+            .licensing {
+                font-size: xx-small;
+                vertical-align: middle;
+                margin-left: 10px;
+            }
+        </style>
+        <title>more than schrott.software</title>
+    </head>
+    <body>
+        <div id="root">
+            <div id="content">
+                <div id="main">
+                    <h3>hi! here are some things I made!</h3>
+                    <p class="license">
+                        all of those things are released into the <a href="https://github.com/yannick-was-taken/yannick-was-taken.github.io/blob/main/LICENSE" target="_blank">public domain</a>. note that assets might be released under a different license!
+                    </p>
+                    <ul>
+                        <li>
+                            <b>embeddable gadgets</b>
+                        </li>
+                        <ul>
+                            <li class="project-li">
+                                <span>
+                                    <a class="project" href="./embeds/timer.html?seconds=10,10,10,20&autostart=0&beep=1&notify=1&color=33bb33">timer</a>: an embeddable timer configurable via URL parameters
+                                </span>
+                                <a class="licensing" target="_blank" href="./embeds/timer.html.license.txt">license breakdown</a>
+                            </li>
+                        </ul>
+                    </ul>
+                </div>
+                <div id="footer">
+                    <p class="made">
+                        made with 🦊
+                    </p>
+                    <p>
+                        the content published here is made by me, and the <a href="https://schrott.software/legal/imprint.html" target="_blank">imprint of schrott.software</a> (german legalese, sorry!) applies, but note that the data protection statement DOES NOT APPLY, as this site is hosted by github, and I cannot control nor know what data they collect.
+                        I collect no information beyond that. so please turn to them for infos!
+                    </p>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
