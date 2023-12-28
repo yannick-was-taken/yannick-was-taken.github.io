@@ -19,12 +19,25 @@
             body {
                 background-color: #222222;
             }
+            a, a:visited, a:hover, a:active {
+                color: #333333;
+                text-decoration: underline;
+            }
             #root {
                 height: 100%;
                 display: flex;
                 flex-direction: row;
                 justify-content: center;
                 align-items: center;
+            }
+            #legal {
+                position: fixed;
+                bottom: 0px;
+                right: 0px;
+                padding: 5px;
+                margin: 3px;
+                border-radius: 5px;
+                background-color: #cccccc;
             }
             #timer {
                 display: flex;
@@ -44,6 +57,7 @@
             .background-time {
                 filter: brightness(50%);
                 opacity: 0.1;
+                user-select: none;
             }
             .foreground-time {
                 position: absolute;
@@ -83,7 +97,7 @@
             }
         </style>
     </head>
-    <body onload="setupTimer()">
+    <body onload="setupTimer()" onclick="/* do nothing */">
         <div id="root">
             <div id="timer">
                 <div id="time">
@@ -102,21 +116,39 @@
                     </div>
                 </div>
             </div>
+            <div id="legal">
+                <a href="./timer.html.license.txt" target="_blank">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                </a>
+            </div>
         </div>
         <script type="text/javascript">
+            const CURRENT_VERSION = "v2"
+
             var config = {
                 "seconds": [60],
                 "autostart": 0,
                 "beep": 1,
                 "notify": 1,
                 "color": "33bb33",
+                "bg": "222222",
+                "id": null,
+            }
+
+            var stored = {
+                "running": false,
+                "timeLeft": 0,
+                "sliceCursor": 0,
+                "timerStart": 0,
             }
 
             var shallNotify = false
+            var useStorage = false
             var sliceCursor = 0
             var timeLeft = 0
             var timerInterval = null
             var timerStart = Date.now()
+            var initializeStart = null
 
             var btnPlay = document.getElementById("play");
             var btnPause = document.getElementById("pause");
@@ -131,7 +163,7 @@
                         let v = decodeURIComponent(parts[1].replace(/\+/g, " "))
                         if (k == "seconds") {
                             v = v.split(",").map(x => parseInt(x))
-                        } else if (/^[0-9]+$/.test(v) && k != "color") {
+                        } else if (/^[0-9]+$/.test(v) && k != "color" && k != "bg") {
                             v = parseInt(v)
                         }
                         obj[k] = v
@@ -140,12 +172,41 @@
                 }, config);
                 console.log("Timer Config: ", config)
 
+                if (config.id !== null) {
+                    try {
+                        localStorage.setItem("$$TEST$$", "works")
+                        if (localStorage.getItem("$$TEST$$") === "works") {
+                            console.log("localStorage detected!")
+                            useStorage = true
+                        }
+                    } catch (e) {
+                        console.log("Cannot use localStorage: ", e)
+                        useStorage = false
+                    }
+                }
+                if (useStorage) {
+                    let data = JSON.parse(localStorage.getItem("timer-" + config.id))
+                    if (data !== null && data.version === CURRENT_VERSION) {
+                        stored = data
+                        sliceCursor = stored.sliceCursor
+                        if (stored.running) {
+                            initializeStart = stored.timerStart
+                        }
+                        console.log("Loaded stored configuration: ", stored)
+                    }
+                }
+
+                document.body.style.backgroundColor = "#" + config.bg
                 document.getElementById("time").style.color = "#" + config.color
 
                 setTimer()
 
-                if (config.autostart) {
+                if (config.autostart || stored.running) {
                     play()
+                }
+
+                if (timerInterval !== null) {
+                    updateTimer(leftOnTimer())
                 }
 
                 btnPlay.onclick = play
@@ -154,7 +215,11 @@
             }
 
             function setTimer() {
-                timeLeft = config.seconds[sliceCursor]
+                if (stored.running) {
+                    timeLeft = stored.timeLeft
+                } else {
+                    timeLeft = config.seconds[sliceCursor]
+                }
                 updateTimer(timeLeft)
             }
 
@@ -175,6 +240,7 @@
                 sliceCursor += 1
                 sliceCursor %= config.seconds.length
                 setTimer()
+                saveTimerState()
 
                 if (shallNotify) {
                     new Notification("Timer Expired", {
@@ -183,7 +249,9 @@
                 }
 
                 if (config.beep) {
-                    new Audio("../assets/sounds/pianonotification4/PianoNotification4.mp3").play()
+                    try {
+                        new Audio("../assets/sounds/pianonotification4/PianoNotification4.mp3").play()
+                    } catch (e) {}
                 }
 
                 if(config.autostart) {
@@ -200,7 +268,12 @@
                     })
                 }
 
-                timerStart = Date.now()
+                if (initializeStart !== null) {
+                    timerStart = initializeStart
+                    initializeStart = null
+                } else {
+                    timerStart = Date.now()
+                }
 
                 if (timerInterval === null) {
                     timerInterval = setInterval(() => {
@@ -215,6 +288,7 @@
                     }, 500)
                     btnPlay.classList.add("disabled")
                     btnPause.classList.remove("disabled")
+                    saveTimerState()
                 }
             }
 
@@ -234,11 +308,24 @@
                     timerInterval = null
                     btnPlay.classList.remove("disabled")
                     btnPause.classList.add("disabled")
+                    saveTimerState()
                 }
             }
 
             function leftOnTimer() {
                 return timeLeft - (Date.now() - timerStart) / 1000
+            }
+
+            function saveTimerState() {
+                if (useStorage) {
+                    stored.version = CURRENT_VERSION
+                    stored.running = timerInterval !== null
+                    stored.sliceCursor = sliceCursor
+                    stored.timeLeft = Math.max(1, timeLeft)
+                    stored.timerStart = timerStart
+                    localStorage.setItem("timer-" + config.id, JSON.stringify(stored))
+                    console.log("Saved state: ", stored)
+                }
             }
         </script>
     </body>
